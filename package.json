@@ -1,0 +1,32 @@
+{
+  "name": "blockchain",
+  "version": "0.1.0",
+  "description": "",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./node_modules/.bin/babel src/ -d lib/",
+    "flow": "flow"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andy-Cheng/blockchain.git"
+  },
+  "author": "Andy Cheng & Adelaide Hsu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Andy-Cheng/blockchain/issues"
+  },
+  "homepage": "https://github.com/Andy-Cheng/blockchain#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/preset-env": "^7.1.6",
+    "babel-cli": "^6.26.0",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.86.0"
+  },
+  "dependencies": {
+    "@babel/polyfill": "^7.0.0"
+  }
+}
