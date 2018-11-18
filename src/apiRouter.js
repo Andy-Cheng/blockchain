@@ -1,75 +1,107 @@
 /**
  * @file Manages routings and api designs.
  */
-
 const blockChainRouter = require('express').Router();
-const { blockModel, blockChainModel } = require('./mongoose-db');
+const { blockModel } = require('./mongoose-db');
 const apiMsg = require('./apiMsg');
+const {multer, blockReadOptions, blockAddOptions, blockChainReadOptions} = require('./multerOption');
+
+//testing data
+let hash = "baa744f2bd8dd2afd98e13de0c3056cf70faef7635efb265d96ffe4d2736cdf4";
+let genesisHash = "93bfd81989ed6feff36abe0228878d62298fd6ffa6ec92e2c3abb4744b4edc5c";
+
 
 // blockChain api
-blockChainRouter.get('/read', upload.fields(readWebform),async (req, res, next)=>{
-    console.log('api: read webform');
-    const {formId} = req.body
-    let returnedWebForm = {};
-    await webForms.find({formId: formId}, function(err, forms){
+// Read a block
+blockChainRouter.get('/read/block', multer.fields(blockReadOptions), async (req, res, next)=>{
+    console.log('api: read block');
+    const { ChainId, height } = req.body
+    // Find block ginven its heigth and chainId.
+    await blockModel.findOne({ChainId: ChainId, height: height}, function(err, block){
         if(err){
-            console.log(`find webform error: ${err}`);
-            res.status(200).json({apiMsg: apiMsg.webformReadUnSuccessfully});
+            console.log(`find block error: ${err}`);
+            res.status(200).json({apiMsg: apiMsg.blockReadUnSuccessfully});
         }
-        console.log(`the result ${forms}`);
-        returnedWebForm = forms[0];
-    });
-    // As loading the webForm, components are also queried from the DB.
-    await components.find({formId: req.body.formId}, function(err, components){
-        if(err){
-            console.log(`find components error: ${err}`);
-            res.status(200).json({apiMsg: apiMsg.webformReadUnSuccessfully});
-        }
-        console.log(`the result is: ${components}`);
-        res.status(200).json({webFormInfo: returnedWebForm, components: components, apiMsg: apiMsg.webformReadSuccessfully});
+        console.log(`the result is:\n ${block}`);
+        res.status(200).json(block);
     })
 });
-
-blockChainRouter.post('/create', upload.fields(createWebform),async (req, res, next)=>{
-    console.log('api: create webform', );
-    const newForm = new webForms({
-        formId: req.body.formId,
-        title: req.body.title,
-        author: req.body.author
-    });
-    await newForm.save(function(err){
+// Add a new block
+blockChainRouter.post('/add/block', multer.fields(blockAddOptions), async(req, res, next) =>{
+    console.log('api: add block');
+    const { ChainId, Transcations } = req.body;
+    // Find prevHash and prev Height
+    const cb1 = (err, prevInfo) =>{
         if(err){
-            console.log(`webform saved  error: ${err}`);
-            res.status(200).json({apiMsg: apiMsg.webformSavedUnSuccessfully});
+            console.log(`find prev block error: ${err}`);
+            res.status(200).json("find prev block failed");
         }
         else{
-            console.log('webform saved successfully');
-            res.status(200).json({apiMsg: apiMsg.webformSavedSuccessfully});
+            return prevInfo;
         }
-    });
-});
+    }
 
-blockChainRouter.delete('/delete', upload.fields(deleteWebform), async (req, res, next)=>{
-    console.log('api: delete webform');
-    await webForms.deleteOne({formId: req.body.formId}, 
-        function(err){
-            if(err){
-            console.log(`delete webform error: ${err}`); res.status(200).json({apiMsg: apiMsg.webformDeletedUnSuccessfully})              
-            }
-     });
-    res.status(200).json({apiMsg: apiMsg.webformDeletedSuccessfully});
-});
+    await blockModel.findOne({ChainId: ChainId})
+            .sort({height: -1})
+            .select("height Hash")
+            .exec(cb1)
+            .then( async (prevInfo) =>{
+                let newBlockInstance;
+                if(prevInfo == null){
+                    newBlockInstance = new blockModel({
+                        height: 0,
+                        prevBlockHash: "none",
+                        Time: new Date().getTime(),
+                        Bits: 20,
+                        Transcations: Transcations,
+                        Hash: genesisHash,
+                        Nonce: 0,
+                    });
+                }
+                // To do: add POW mechanism here.
+                else{
+                    newBlockInstance = new blockModel({
+                        height: prevInfo,height,
+                        prevBlockHash: prevInfo.Hash,
+                        Time: new Date().getTime(),
+                        Bits: 20,
+                        Transcations: Transcations,
+                        Hash: hash,
+                        Nonce: 0,
+                    });
+                }
+                // add a new block
+                await newBlockInstance.save(function (err) {
+                    if (err) {
+                        console.log(`New BlockInstance saved  error: ${err}`);
+                        res.status(200).json({ apiMsg: apiMsg.blockSavedUnSuccessfully });
+                    }
+                    else {
+                        console.log('New BlockInstance saved successfully');
+                        res.status(200).json({ apiMsg: apiMsg.blockSavedSuccessfully });
+                    }
+                });
 
-blockChainRouter.put('/update', upload.fields(modifyWebform), async(req, res, next)=>{
-    console.log('api: update webform');
-    webForms.update({formId: req.body.formId}, {author: req.body.author, title: req.body.title}, function(err){
+            });
+});
+// Read a chain
+blockChainRouter.get('/read/chain', multer.fields(blockChainReadOptions), async (req, res, next)=>{
+    console.log('api: read chain');
+    const { ChainId } = req.body
+    // Find chain given its ChainId(GenesisHash)
+    const cb1 = (err, blocks) =>{
         if(err){
-            console.log(`update webform error: ${err}`);
-            res.status(200).json({apiMsg: apiMsg.webformUpdatedUnSuccessfully});
+            console.log(`read chain err: ${err}`);
+            res.status(200).json({apiMsg: apiMsg.blockChainReadSuccessfully});
         }
-     });
-     res.status(200).json({apiMsg: apiMsg.webformUpdatedSuccessfully});
-})
+        else{
+            res.status(200).json({blocksOnChain: blocks});
+        }
+    };
+    await blockModel.find({ChainId: ChainId})
+            .sort({height})
+            .exec(cb1);
+});
 
 module.exports = {
     blockChainRouter

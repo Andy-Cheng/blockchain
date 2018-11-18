@@ -5,6 +5,7 @@
 - DB
     - https://hackmd.io/R9eFxCZJSya17gzmbK2QFQ?view
     - https://mongoosejs.com/docs/schematypes.html#arrays
+    - https://blog.csdn.net/WHUZXQ/article/details/74987530
 - Frontend
     - ReactJS
 - Backend
@@ -17,6 +18,7 @@
 - main part: apiMsg.js, apiRouter.js
 - start part: index.js
 - Add npm run scripts
+### Frontend
 
 ## usage
 **This usage is for Unix-like OS.**

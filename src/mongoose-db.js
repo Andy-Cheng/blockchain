@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 
 // define the schema of blocks
 const blockSchema = new mongoose.Schema({
+    ChainId: String,
     height: Number,
     prevBlockHash: String,
     Time: Date,
@@ -17,20 +18,21 @@ const blockSchema = new mongoose.Schema({
     Nonce: Number
 });
 
+/*
 // define the schema of blockchains
 const blockChainSchema = new mongoose.Schema({
     GensisHash: String,
-    BlocksHash: {type: [blockSchema], default: undefined}
+    BlocksHash: {type: [String], default: undefined}
   });
-
+*/
 
 
 // initiate models
 const blockModel = mongoose.model('blocks', blockSchema);
-const blockChainModel = mongoose.model('blockChains', blockChainSchema);
+// const blockChainModel = mongoose.model('blockChains', blockChainSchema);
 
 
 module.exports = {
     blockModel,
-    blockChainModel
+    // blockChainModel
 };

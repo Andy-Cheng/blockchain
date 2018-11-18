@@ -11,6 +11,6 @@ const calculateHash = (data) =>{
 
     return cipher.digest('hex');
 };
-let data = "abcd" + "ss" + "sss"; 
+let data = "abcfsf" + "ss" + "sss"; 
 console.log(calculateHash(data))
 console.log(parseInt(data, 16))
