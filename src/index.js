@@ -3,8 +3,8 @@ const app = express()
 const http = require('http');
 const server = http.createServer(app)
 
-const { blockChainRouter } = require('./appRouter');
-app.use('/api/blockchain', blockChainRouter);
+const { blockChainRouter } = require('./apiRouter');
+app.use('/api', blockChainRouter);
 
 
 const port = 8080||process.env.Port;

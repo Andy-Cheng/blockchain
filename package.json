@@ -7,7 +7,7 @@
     "start": "nodemon ./src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "./node_modules/.bin/babel src -d lib",
-    "startdblocally": "./startDBlocally.sh",
+    "startdblocally": "./startDB.sh",
     "dev": "npm run startdblocally & npm start"
   },
   "repository": {
