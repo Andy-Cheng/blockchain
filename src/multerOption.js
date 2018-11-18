@@ -1,5 +1,5 @@
-const multer  = require('multer');
-const upload = multer();
+const multerLibrary  = require('multer');
+const multer = multerLibrary();
 
 const multerOptions = {
     multer, 
