@@ -15,7 +15,7 @@
 ### BlockChain
 - UTXO transcation Model (util.js)
 ### Backend
-- main part: apiMsg.js, apiRouter.js
+- main part: Add POW mechanism
 - start part: index.js
 - Add npm run scripts
 ### Frontend
