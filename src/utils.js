@@ -34,8 +34,8 @@ class BlockChain{
         this.blocks.push(BlockChain.NewGenesisBlock());
     }
 
-    static NewGenesisBlock() {
-        return BlockChain.NewBlock("區塊鏈gogog!", "創世區塊prevhash", 0);
+    static NewGenesisBlock(transcations) {
+        return BlockChain.NewBlock(transcations, "創世區塊prevhash", 0);
     }
 
     /**
@@ -49,7 +49,7 @@ class BlockChain{
             prevheight + 1,
             prevBlockHash, 
             new Date(),
-            8, 
+            8,
             transcations,
         );
         newBlock.setHash();

@@ -6,6 +6,7 @@ const multer  = require('multer')();
 const { blockModel } = require('./mongoose-db');
 const apiMsg = require('./apiMsg');
 const { blockReadOptions, blockAddOptions, blockChainReadOptions } = require('./multerOption');
+const { Block, BlockChain, Pow } = require('./utils');
 
 //testing data
 let hash = "baa744f2bd8dd2afd98e13de0c3056cf70faef7635efb265d96ffe4d2736cdf4";
@@ -31,7 +32,7 @@ blockChainRouter.get('/read/block', multer.fields(blockReadOptions), async (req,
 blockChainRouter.post('/add/block', multer.fields(blockAddOptions), async(req, res, next) =>{
     console.log('api: add block');
     const { ChainId, Transcations } = req.body;
-    console.log(`ChainId: ${ChainId},\nTranscations: ${Transcations}`)
+    console.log(`ChainId: ${ChainId}, Transcations: ${Transcations}`)
     // Find prevHash and prev Height
     const cb1 = async (err, prevInfo) =>{
         if(err){
@@ -39,37 +40,28 @@ blockChainRouter.post('/add/block', multer.fields(blockAddOptions), async(req, r
             res.status(200).json("find prevBlock failed");
         }
         else{
-            console.log(`prevInfo ${typeof(prevInfo)}`)
-            let newBlock = {};
+            let block = {};
             //Genesis Block
             if(prevInfo.length == 0){
-                console.log("Chain is still empty")
-                newBlock = {
-                        ChainId: ChainId,
-                        height: 1,
-                        prevBlockHash: "none",
-                        Time: new Date(),
-                        Bits: 20,
-                        Transcations: Transcations,
-                        Hash: ChainId,
-                        Nonce: 0,
-                    };
+                console.log("Chain is still empty, so let's create one.")
+                block = BlockChain.NewGenesisBlock(`Chain ${ChainId} first transaction: ` + Transcations);
             }
             // To do: add POW mechanism here.
             //Normal Block
             else{
-                console.log("Chain is not empty");
-                newBlock = {
-                    ChainId: ChainId,
-                    height: prevInfo[0].height + 1,
-                    prevBlockHash: prevInfo[0].Hash,
-                    Time: new Date(),
-                    Bits: 20,
-                    Transcations: Transcations,
-                    Hash: hash,
-                    Nonce: 0,
-                };
+                console.log("Chain is not empty, so let's apeend the new block to the end of the chain.");
+                block = BlockChain.NewBlock(Transcations, prevInfo[0].Hash, prevInfo[0].height);
             }
+            let newBlock = {
+                ChainId: ChainId,
+                height: block.height,
+                prevBlockHash: block.prevBlockHash,
+                Time: block.Time,
+                Bits: block.Bits,
+                Transcations: block.Transcations,
+                Hash: block.Hash,
+                Nonce: block.nonce,
+            };
             // add a new block
             const newBlockInstance = new blockModel(newBlock);
             console.log("newblock", newBlockInstance);
