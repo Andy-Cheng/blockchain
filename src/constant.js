@@ -1,1 +1,2 @@
-export const maxNonce = Number.MAX_SAFE_INTEGER;
+const maxNonce = Number.MAX_SAFE_INTEGER;
+module.exports = { maxNonce };

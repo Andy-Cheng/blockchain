@@ -1,8 +1,7 @@
-import { maxNonce } from "./constant";
+const { maxNonce } = require('./constant');
 const crypto = require('crypto');
 
 class Block{
-
     /**
      * 
      * @param {Number} height 
@@ -36,24 +35,22 @@ class BlockChain{
     }
 
     static NewGenesisBlock() {
-        return BlockChain.NewBlock("Genesis block!", "", 0);
+        return BlockChain.NewBlock("區塊鏈gogog!", "創世區塊prevhash", 0);
     }
 
     /**
      * 
-     * @param {string} transcation 
+     * @param {string} transcations
      * @param {string} prevBlockHash 
      * @param {Number} prevheight 
      */
-    static NewBlock(transcation, prevBlockHash, prevheight){
+    static NewBlock(transcations, prevBlockHash, prevheight){
         const newBlock = new Block(
             prevheight + 1,
             prevBlockHash, 
             new Date(),
-            20, 
-            0, 
-            transcation,
-            "",
+            8, 
+            transcations,
         );
         newBlock.setHash();
         return newBlock;
@@ -83,22 +80,26 @@ class Pow{
         this.block = block;
         const{ Bits } = block;
         // Set Target. Target menas the number larger than maximum possible solution by 1 bit.
-        this._target = 1 << (256 - Bits);
+        // Diffulty is Bits / 4.
+        this.diffulty = Bits / 4;
+        this._target = Array(this.diffulty + 1).join("0");
     }
     prepareData(nonce){
         const {height, prevBlockHash, Time, Bits, Transcations} = this.block;
-        return (height + prevBlockHash + Time.getTime() + Bits + Transcations);
+        return (height + prevBlockHash + Time.getTime() + Bits + Transcations + nonce);
     }
     // We aim to find (nonce, hash) to fulfill the inequality of POW.
     Run(){
         const {_target} = this;
         // Try nonce form 0 to maxNonce
-        for(let nonce = 0; nonce < maxNonce; ++nonce){
+        let nonce = 0;
+        let hash = "";
+        for(; nonce < maxNonce; ++nonce){
             let data = this.prepareData(nonce);
-            let hash = calculateHash(data);
+            hash = calculateHash(data);
             console.log(`hash: ${hash}`);
-            let hashInt = parseInt(data, 16);
-            if(hashInt < _target){
+            // console.log(`target: ${_target}`)
+            if( hash.substring(0, this.diffulty) === _target){
                 break;
             }
             else{
@@ -111,3 +112,9 @@ class Pow{
 
     }
 }
+
+module.exports = {
+    Block,
+    BlockChain, 
+    Pow,
+};
