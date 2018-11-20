@@ -4,11 +4,12 @@
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
-    "start": "nodemon ./src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/index.js",
+    "test": "nodemon ./src/index.js",
     "build": "./node_modules/.bin/babel src -d lib",
     "startdblocally": "./startDB.sh",
-    "dev": "npm run startdblocally & npm start"
+    "dev": "npm run startdblocally & npm run test",
+    "pub": "npm run startdblocally & npm start"
   },
   "repository": {
     "type": "git",

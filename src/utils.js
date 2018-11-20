@@ -49,7 +49,7 @@ class BlockChain{
      * transaction is an transaction class
      */
     static NewGenesisBlock(transcation) {
-        return BlockChain.NewBlock([transcation], "創世區塊prevhash", 0);
+        return BlockChain.NewBlock([transcation], null, 0);
     }
 
     /**
@@ -65,7 +65,7 @@ class BlockChain{
             prevheight + 1,
             prevBlockHash, 
             new Date(),
-            4,
+            8,
             transcations,
         );
         newBlock.setHash();
@@ -102,7 +102,6 @@ class BlockChain{
 }
 
 const getBalanceOfAddr = (blocks, pendingTransactions, addr) =>{
-    // console.log(`get blocks: ${blocks[0].Transcations[0].amount}`)
     let balance = 0;
     blocks.map( (block) =>{
         block.Transcations.map((transaction) =>{
@@ -164,7 +163,6 @@ class Pow{
             let data = this.prepareData(nonce);
             hash = calculateHash(data);
             console.log(`hash: ${hash}`);
-            // console.log(`target: ${_target}`)
             if( hash.substring(0, this.diffulty) === _target){
                 break;
             }
@@ -186,13 +184,11 @@ class Transaction{
         this.FromAddr = FromAddr;
         this.ToAddr = ToAddr;
         this.amount = amount;
+        this.Date = new Date();
     }
 }
 
 module.exports = {
-    Block,
     BlockChain, 
-    Pow,
-    Transaction,
     getBalanceOfAddr,
 };

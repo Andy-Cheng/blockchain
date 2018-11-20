@@ -15,7 +15,7 @@
 ### BlockChain
 - Script signature
 ### Backend
-- Combine util.js stage2 to server.
+- Hosting front-end files.
 ### Frontend
 
 ## usage
