@@ -32,33 +32,37 @@ class Block{
     */
 }
 
-
-
 class BlockChain{
     constructor(){
         this.blocks = [];
-        this.blocks.push(BlockChain.NewGenesisBlock());
+        // pendingTransactions is an array of transaction Object.
         this.pendingTransactions = [];
         this.miningReaward  = 100;
     }
 
-    static NewGenesisBlock(transcations) {
-        
-        return BlockChain.NewBlock(transcations, "創世區塊prevhash", 0);
+    /**
+     * 
+     * @param {Array} transcation
+     * transaction is an transaction class
+     */
+    static NewGenesisBlock(transcation) {
+        return BlockChain.NewBlock([transcation], "創世區塊prevhash", 0);
     }
 
     /**
      * 
-     * @param {string} transcations
+     * @param {Array} transcations
      * @param {string} prevBlockHash 
      * @param {Number} prevheight 
+     * transactions is an array of transaction class
+     * 
      */
     static NewBlock(transcations, prevBlockHash, prevheight){
         const newBlock = new Block(
             prevheight + 1,
             prevBlockHash, 
             new Date(),
-            8,
+            4,
             transcations,
         );
         newBlock.setHash();
@@ -68,41 +72,57 @@ class BlockChain{
     // Mine a new block and send a reward by sending a new Transaction.
     minePendingTransaction(miningRewardAddr){
         const { blocks } = this;
-        prevBlock = blocks[blocks.length() - 1];
-        let newBlock = BlockChain.NewBlock(this.pendingTransactions[this.pendingTransactions.length -1 ], prevBlock.Hash(), blocks.length());
+        const minerTransaction = new Transaction("mining reward", miningRewardAddr, this.miningReaward);
+        let newBlock;
+        if (blocks.length == 0){
+            newBlock = BlockChain.NewGenesisBlock(minerTransaction);
+        }
+        else{
+            this.pendingTransactions.push(minerTransaction);
+            let prevBlock = blocks[blocks.length - 1];
+            newBlock = BlockChain.NewBlock(this.pendingTransactions, prevBlock.Hash, prevBlock.height);
+        }
         this.blocks.push(newBlock);
-        this.pendingTransactions = [
-            new Transaction(null, miningRewardAddr,  this.miningReaward)
-        ];
-        
+        this.pendingTransactions = [];
     }
 
-    createTransaction(transaction){
-        this.pendingTransactions.push(transaction);
-    }
-    
-    getBalanceOfAddr(addr){
-        let balalnce = 0;
-        this.blocks.map((block, heightMinusOne)=>{
-            block.transcations.map((transaction) =>{
-                if(transaction.FromAddr == addr){
-                    balance -= transaction.amount;
-                }
-                else if(transaction.ToAddr == addr){
-                    balance += transaction.amount;
-                }
-            });
-        });
-        return balalnce;
+
+    createTransaction(FromAddr, ToAddr, amount){
+        // console.log(`this: ${this.blocks[0]}`)
+        let senderBalance = getBalanceOfAddr(this.blocks, this.pendingTransactions, FromAddr);
+        console.log(`Sender's balance: ${senderBalance}, amount to be sent: ${amount}`);
+        if( senderBalance < amount ){
+            return "Balance_of_the_sender_is_not_enough"
+        }
+        this.pendingTransactions.push(new Transaction(FromAddr, ToAddr, amount));
+        return "Transaction_is_approved"
     }
 
-    addBlock(transcations){
-        const { blocks } = this;
-        prevBlock = blocks[blocks.length() - 1];
-        let newBlock = BlockChain.NewBlock(transcations, prevBlock.Hash(), blocks.length());
-        this.blocks.push(newBlock);
-    }
 }
+
+const getBalanceOfAddr = (blocks, pendingTransactions, addr) =>{
+    // console.log(`get blocks: ${blocks[0].Transcations[0].amount}`)
+    let balance = 0;
+    blocks.map( (block) =>{
+        block.Transcations.map((transaction) =>{
+            if(transaction.FromAddr == addr){
+                balance -= transaction.amount;
+            }
+            else if(transaction.ToAddr == addr){
+                balance += transaction.amount;
+            }
+        });
+    });
+    pendingTransactions.map( (transaction) =>{
+        if(transaction.FromAddr == addr){
+            balance -= transaction.amount;
+        }
+        else if(transaction.ToAddr == addr){
+            balance += transaction.amount;
+        }
+    });
+    return balance;
+};
 
 // We use sha256 to hash transcations, and represent the result as a hex string.
 // Note: cipher.update(String, encoding) will update the content to be hashed. 
@@ -134,6 +154,7 @@ class Pow{
     }
     // We aim to find (nonce, hash) to fulfill the inequality of POW.
     Run(){
+        console.log("Start mining...")
         const {_target} = this;
         // Try nonce form 0 to maxNonce
         let nonce = 0;
@@ -149,7 +170,8 @@ class Pow{
             else{
                 ++nonce;
             }
-        }        
+        }
+        console.log("Mining is done !")
         return {nonce, hash};
     }
     Validate(){
@@ -157,12 +179,7 @@ class Pow{
     }
 }
 
-module.exports = {
-    Block,
-    BlockChain, 
-    Pow,
-    Transaction,
-};
+
 /*
 class TXInput{
     constructor(Txid, Vout, ScriptSig){
@@ -187,3 +204,11 @@ class TXOutput{
     }
 }
 */
+
+module.exports = {
+    Block,
+    BlockChain, 
+    Pow,
+    Transaction,
+    getBalanceOfAddr,
+};
