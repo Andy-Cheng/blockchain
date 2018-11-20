@@ -8,7 +8,8 @@ class Block{
      * @param {String} prevBlockHash 
      * @param {Date} Time 
      * @param {Number} Bits 
-     * @param {string} Transcations 
+     * @param {Array} Transcations
+     * Transactions is an array of class Transaction
      */
     constructor(height, prevBlockHash, Time, Bits, Transcations){
         this.height = height;
@@ -24,6 +25,11 @@ class Block{
         this.Hash = hash;
         this.nonce = nonce;
     }
+    /*
+    hashTX(){
+        return calculateHash(this.Transcations);
+    }
+    */
 }
 
 
@@ -32,9 +38,12 @@ class BlockChain{
     constructor(){
         this.blocks = [];
         this.blocks.push(BlockChain.NewGenesisBlock());
+        this.pendingTransactions = [];
+        this.miningReaward  = 100;
     }
 
     static NewGenesisBlock(transcations) {
+        
         return BlockChain.NewBlock(transcations, "創世區塊prevhash", 0);
     }
 
@@ -56,11 +65,41 @@ class BlockChain{
         return newBlock;
     
     };
+    // Mine a new block and send a reward by sending a new Transaction.
+    minePendingTransaction(miningRewardAddr){
+        const { blocks } = this;
+        prevBlock = blocks[blocks.length() - 1];
+        let newBlock = BlockChain.NewBlock(this.pendingTransactions[this.pendingTransactions.length -1 ], prevBlock.Hash(), blocks.length());
+        this.blocks.push(newBlock);
+        this.pendingTransactions = [
+            new Transaction(null, miningRewardAddr,  this.miningReaward)
+        ];
+        
+    }
+
+    createTransaction(transaction){
+        this.pendingTransactions.push(transaction);
+    }
+    
+    getBalanceOfAddr(addr){
+        let balalnce = 0;
+        this.blocks.map((block, heightMinusOne)=>{
+            block.transcations.map((transaction) =>{
+                if(transaction.FromAddr == addr){
+                    balance -= transaction.amount;
+                }
+                else if(transaction.ToAddr == addr){
+                    balance += transaction.amount;
+                }
+            });
+        });
+        return balalnce;
+    }
 
     addBlock(transcations){
         const { blocks } = this;
         prevBlock = blocks[blocks.length() - 1];
-        newBlock = BlockChain.NewBlock(transcations, prevBlock.Hash(), blocks.length());
+        let newBlock = BlockChain.NewBlock(transcations, prevBlock.Hash(), blocks.length());
         this.blocks.push(newBlock);
     }
 }
@@ -86,7 +125,12 @@ class Pow{
     }
     prepareData(nonce){
         const {height, prevBlockHash, Time, Bits, Transcations} = this.block;
-        return (height + prevBlockHash + Time.getTime() + Bits + Transcations + nonce);
+        let dataToBeHashed = (height + prevBlockHash + Time.getTime() + Bits + nonce);
+        Transcations.map( (transaction)=> {
+            const { FromAddr, ToAddr, amount } = transaction;
+            dataToBeHashed += FromAddr + ToAddr + amount;
+        });
+        return dataToBeHashed;
     }
     // We aim to find (nonce, hash) to fulfill the inequality of POW.
     Run(){
@@ -117,4 +161,29 @@ module.exports = {
     Block,
     BlockChain, 
     Pow,
+    Transaction,
 };
+/*
+class TXInput{
+    constructor(Txid, Vout, ScriptSig){
+        this.Txid = Txid;
+        this.Vout = Vout;
+        this.ScriptSig = ScriptSig;
+    }
+}
+*/
+class Transaction{
+    constructor(FromAddr, ToAddr, amount){
+        this.FromAddr = FromAddr;
+        this.ToAddr = ToAddr;
+        this.amount = amount;
+    }
+}
+/*
+class TXOutput{
+    constructor(Value, ScriptPubKey){
+        this.Value = Value;
+        this.ScriptPubKey = ScriptPubKey;
+    }
+}
+*/
