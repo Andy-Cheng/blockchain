@@ -13,9 +13,9 @@
 
 ## Todo 
 ### BlockChain
-- UTXO transcation Model (util.js)
+- Script signature
 ### Backend
-- start part: index.js
+- Combine util.js stage2 to server.
 ### Frontend
 
 ## usage
