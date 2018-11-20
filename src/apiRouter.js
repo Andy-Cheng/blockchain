@@ -5,13 +5,12 @@ const blockChainRouter = require('express').Router();
 const multer  = require('multer')();
 const { blockModel } = require('./mongoose-db');
 const apiMsg = require('./apiMsg');
-const { blockReadOptions, blockAddOptions, blockChainReadOptions } = require('./multerOption');
+const { blockReadOptions, blockChainReadOptions, mineBlockOptions, transactionAddOptions } = require('./multerOption');
 const { Block, BlockChain, Pow } = require('./utils');
 
-//testing data
-let hash = "baa744f2bd8dd2afd98e13de0c3056cf70faef7635efb265d96ffe4d2736cdf4";
-let genesisHash = "93bfd81989ed6feff36abe0228878d62298fd6ffa6ec92e2c3abb4744b4edc5c";
-
+// Initialize a blockchain.
+const blockChain = new BlockChain();
+// note: remember to filter chainId.
 
 // blockChain api
 // Read a block
@@ -26,13 +25,14 @@ blockChainRouter.get('/read/block', multer.fields(blockReadOptions), async (req,
         }
         console.log(`the result is:\n ${block}`);
         res.status(200).json(block);
-    })
+    });
 });
-// Add a new block
-blockChainRouter.post('/add/block', multer.fields(blockAddOptions), async(req, res, next) =>{
-    console.log('api: add block');
-    const { ChainId, Transcations } = req.body;
-    console.log(`ChainId: ${ChainId}, Transcations: ${Transcations}`)
+
+// Mine a new block
+blockChainRouter.post('/mine/block', multer.fields(mineBlockOptions), async(req, res, next) =>{
+    console.log('api: mine block');
+    const { ChainId, MinerAddr } = req.body;
+    console.log(`ChainId: ${ChainId}, Miner address: ${MinerAddr}`)
     // Find prevHash and prev Height
     const cb1 = async (err, prevInfo) =>{
         if(err){
@@ -44,13 +44,14 @@ blockChainRouter.post('/add/block', multer.fields(blockAddOptions), async(req, r
             //Genesis Block
             if(prevInfo.length == 0){
                 console.log("Chain is still empty, so let's create one.")
-                block = BlockChain.NewGenesisBlock(`Chain ${ChainId} first transaction: ` + Transcations);
+                block = blockChain.minePendingTransaction(ChainId, MinerAddr, true);
             }
             // To do: add POW mechanism here.
             //Normal Block
             else{
                 console.log("Chain is not empty, so let's apeend the new block to the end of the chain.");
-                block = BlockChain.NewBlock(Transcations, prevInfo[0].Hash, prevInfo[0].height);
+                console.log("prevInfo", prevInfo)
+                block = blockChain.minePendingTransaction(ChainId, MinerAddr, false, prevInfo[0]);
             }
             let newBlock = {
                 ChainId: ChainId,
@@ -83,6 +84,27 @@ blockChainRouter.post('/add/block', multer.fields(blockAddOptions), async(req, r
             .select("height Hash")
             .exec(cb1);
 });
+
+// Add a new Transaction
+blockChainRouter.post('/add/transaction', multer.fields(transactionAddOptions), async(req, res, next) =>{
+    console.log('api: add transaction');
+    const { ChainId, FromAddr, ToAddr, amount } = req.body;
+    console.log(`ChainId: ${ChainId}, from: ${FromAddr}, to: ${ToAddr}, amount: ${amount}`)
+
+    const cb1 = (blocks)=>{
+        blockChain.createTransaction(ChainId, FromAddr, ToAddr, amount, blocks);
+        console.log("now pending transactions are:\n")
+        blockChain.pendingTransactions.map( (pendingTx) =>{
+            console.log(`Tx: ${pendingTx.ChainId}, ${pendingTx.FromAddr}, ${pendingTx.ToAddr}, ${pendingTx.amount}`);
+        });
+        console.log("\n");
+        res.status(200).json("add transaction successfully.")
+    };
+
+    blockModel.find({ChainId: ChainId})
+    .exec(cb1);
+});
+
 // Read a chain
 blockChainRouter.get('/read/chain', multer.fields(blockChainReadOptions), async (req, res, next)=>{
     console.log('api: read chain');

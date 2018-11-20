@@ -33,9 +33,12 @@ class Block{
 }
 
 class BlockChain{
+    /**
+     * 
+     * @param {Transaction Array} pendingTransactions 
+     * 
+     */
     constructor(){
-        this.blocks = [];
-        // pendingTransactions is an array of transaction Object.
         this.pendingTransactions = [];
         this.miningReaward  = 100;
     }
@@ -70,32 +73,30 @@ class BlockChain{
     
     };
     // Mine a new block and send a reward by sending a new Transaction.
-    minePendingTransaction(miningRewardAddr){
-        const { blocks } = this;
-        const minerTransaction = new Transaction("mining reward", miningRewardAddr, this.miningReaward);
+    minePendingTransaction(ChainId, miningRewardAddr, isGenesis = false, prevInfo={}){
+        const minerTransaction = new Transaction(ChainId, "mining reward", miningRewardAddr, this.miningReaward);
         let newBlock;
-        if (blocks.length == 0){
+        if (isGenesis){
             newBlock = BlockChain.NewGenesisBlock(minerTransaction);
         }
         else{
             this.pendingTransactions.push(minerTransaction);
-            let prevBlock = blocks[blocks.length - 1];
-            newBlock = BlockChain.NewBlock(this.pendingTransactions, prevBlock.Hash, prevBlock.height);
+            newBlock = BlockChain.NewBlock(this.pendingTransactions.filter( (transaction) => (transaction.ChainId == ChainId) ), prevInfo.Hash, prevInfo.height);
         }
-        this.blocks.push(newBlock);
-        this.pendingTransactions = [];
+        this.pendingTransactions = this.pendingTransactions.filter( (transaction) => (transaction.ChainId != ChainId) );
+        // Store this new block into DB.
+        return newBlock;
     }
 
 
-    createTransaction(FromAddr, ToAddr, amount){
-        // console.log(`this: ${this.blocks[0]}`)
-        let senderBalance = getBalanceOfAddr(this.blocks, this.pendingTransactions, FromAddr);
+    createTransaction(ChainId, FromAddr, ToAddr, amount, blocks){
+        let senderBalance = getBalanceOfAddr(blocks, this.pendingTransactions, FromAddr);
         console.log(`Sender's balance: ${senderBalance}, amount to be sent: ${amount}`);
         if( senderBalance < amount ){
-            return "Balance_of_the_sender_is_not_enough"
+            return "Balance_of_the_sender_is_not_enough";
         }
-        this.pendingTransactions.push(new Transaction(FromAddr, ToAddr, amount));
-        return "Transaction_is_approved"
+        this.pendingTransactions.push(new Transaction(ChainId, FromAddr, ToAddr, amount));
+        return "Transaction_is_approved";
     }
 
 }
@@ -179,31 +180,14 @@ class Pow{
     }
 }
 
-
-/*
-class TXInput{
-    constructor(Txid, Vout, ScriptSig){
-        this.Txid = Txid;
-        this.Vout = Vout;
-        this.ScriptSig = ScriptSig;
-    }
-}
-*/
 class Transaction{
-    constructor(FromAddr, ToAddr, amount){
+    constructor(ChainId, FromAddr, ToAddr, amount){
+        this.ChainId = ChainId;
         this.FromAddr = FromAddr;
         this.ToAddr = ToAddr;
         this.amount = amount;
     }
 }
-/*
-class TXOutput{
-    constructor(Value, ScriptPubKey){
-        this.Value = Value;
-        this.ScriptPubKey = ScriptPubKey;
-    }
-}
-*/
 
 module.exports = {
     Block,
