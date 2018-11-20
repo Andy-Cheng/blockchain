@@ -13,7 +13,7 @@ const blockSchema = new mongoose.Schema({
     prevBlockHash: String,
     Time: Date,
     Bits: Number,
-    Transcations: String,
+    Transcations: Array,
     Hash: String,
     Nonce: Number
 });
@@ -26,13 +26,21 @@ const blockChainSchema = new mongoose.Schema({
   });
 */
 
+const pendingTransactionSchema = new mongoose.Schema({
+    ChainId: String,
+    FromAddr: String,
+    ToAddr: String,
+    amount: Number
+});
 
 // initiate models
 const blockModel = mongoose.model('blocks', blockSchema);
+const pendingTransactionModel = mongoose.model('pendingTransaction', pendingTransactionSchema);
 // const blockChainModel = mongoose.model('blockChains', blockChainSchema);
 
 
 module.exports = {
     blockModel,
+    pendingTransactionModel
     // blockChainModel
 };

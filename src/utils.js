@@ -100,6 +100,7 @@ class BlockChain{
 
 }
 
+
 const getBalanceOfAddr = (blocks, pendingTransactions, addr) =>{
     // console.log(`get blocks: ${blocks[0].Transcations[0].amount}`)
     let balance = 0;
@@ -210,5 +211,5 @@ module.exports = {
     BlockChain, 
     Pow,
     Transaction,
-    getBalanceOfAddr,
+    getBalanceOfAddr
 };
