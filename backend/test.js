@@ -1,75 +1,42 @@
-const crypto = require('crypto');
-const { Block, BlockChain, Pow, getBalanceOfAddr } = require('./src/utils');
-// const cipher = crypto.createHash('sha256');
+const { Transaction, BlockChain,  getBalanceOfAddr, isChainValid } = require('./src/utils');
 
-// var message = 'hello';
-// var digest = cipher.update(message, 'utf8').digest('base64'); 
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
+const blocks = [];
 
-// console.log(digest.length);
-/*
-const calculateHash = (data) =>{
-    const cipher = crypto.createHash('sha256');
-    cipher.update(data, 'utf8');         
+// Your private key goes here
+const myKey = ec.keyFromPrivate('36b8ea2ae1c6617826641cd8fe38e66cc90fa2020f6fde59f778a297df0539ff');
 
-    return cipher.digest('hex');
-};
-let data = "abcfsf" + "ss" + "sss"; 
-console.log(calculateHash(data))
-console.log(parseInt(calculateHash(data), 16))
-*/
+// From that we can calculate your public key (which doubles as your wallet address)
+const myWalletAddress = myKey.getPublic('hex');
 
-const userAddrs = {
-  Andy: "1",
-  Kevin: "2",
-  Joe: "3",
-};
-
-let transactionMsg;
+// Create new instance of Blockchain class
 const blockChain = new BlockChain();
+blocks.push(blockChain.minePendingTransaction("1", myWalletAddress, true));
 
-console.log("Andy is mining...")
-blockChain.minePendingTransaction(userAddrs.Andy);
-console.log("Andy mines a new block")
-console.log(`Andy's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 1)}`)
+// Create a transaction & sign it with your key
+const tx1 = new Transaction("1", myWalletAddress, 'address2', 50);
+tx1.signTx(myKey);
+blockChain.addTransaction(tx1, blocks);
 
-console.log("Keivin is mining...")
-blockChain.minePendingTransaction(userAddrs.Kevin);
-console.log("Kevin mines a new block")
-console.log(`Kevin's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 2)}`)
+// Mine block
+blocks.push(blockChain.minePendingTransaction("1", myWalletAddress, false, blocks[0]) );
 
-console.log("Andy --->  Kevin: 50")
-transactionMsg = blockChain.createTransaction(userAddrs.Andy, userAddrs.Kevin, 50);
-console.log(transactionMsg)
-console.log(`Andy's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 1)}`)
-console.log(`Kevin's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 2)}`)
+// Create second transaction
+const tx2 = new Transaction("1", myWalletAddress, 'address1', 50);
+tx2.signTx(myKey);
+blockChain.addTransaction(tx1, blocks);
 
-console.log("Joe --->  Andy: 50")
-transactionMsg = blockChain.createTransaction(userAddrs.Joe, userAddrs.Andy, 50);
-console.log(transactionMsg)
-console.log(`Andy's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 1)}`)
-console.log(`Joe's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 3)}`)
-
-console.log("Kevin ---> Joe")
-transactionMsg = blockChain.createTransaction(userAddrs.Kevin, userAddrs.Joe, 25);
-console.log(transactionMsg)
-console.log(`Kevin's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 2)}`)
-console.log(`Joe's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 3)}`)
-
-console.log("Joe is mining...")
-blockChain.minePendingTransaction(userAddrs.Joe);
-console.log("Joe mines a new block")
-console.log(`Joe's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 3)}`)
+// Mine block
+blocks.push(blockChain.minePendingTransaction("1", myWalletAddress, false, blocks[1]) );
 
 
+console.log();
+console.log(`Balance of andy is ${getBalanceOfAddr(blocks, blockChain.pendingTransactions, myWalletAddress)}`);
 
+// Uncomment this line if you want to test tampering with the chain
+// blocks[1].transactions[0].amount = 10;
 
-
-let {height, prevBlockHash, Time, Bits, Transcations, Hash, nonce} = blockChain.blocks[0];
-console.log(`\nblockChain first block: \n${height}\n${prevBlockHash}\n${Time}\n${Bits}\ntransactions: ${Transcations}\n${Hash}\n${nonce}`);
-console.log(`prevHash  of second block: ${blockChain.blocks[1].prevBlockHash}`);
-
-console.log("\nFinish transaction. Result:\n")
-console.log(`Chain length: ${blockChain.blocks.length}`)
-console.log(`Andy's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 1)}`)
-console.log(`Kevin's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 2)}`)
-console.log(`Joe's balance: ${getBalanceOfAddr(blockChain.blocks, blockChain.pendingTransactions, 3)}`)
+// Check if the chain is valid
+console.log();
+console.log('Blockchain valid?', isChainValid(blocks)? 'Yes' : 'No');
