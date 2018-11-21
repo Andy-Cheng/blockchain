@@ -1,0 +1,37 @@
+{
+  "name": "blockchain",
+  "version": "0.1.0",
+  "description": "",
+  "main": "./lib/index.js",
+  "scripts": {
+    "start": "node ./src/index.js",
+    "test": "nodemon ./src/index.js",
+    "build": "./node_modules/.bin/babel src -d lib",
+    "startdblocally": "./startDB.sh",
+    "dev": "npm run startdblocally & npm run test",
+    "pub": "npm run startdblocally & npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andy-Cheng/blockchain.git"
+  },
+  "author": "Andy Cheng & Adelaide Hsu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Andy-Cheng/blockchain/issues"
+  },
+  "homepage": "https://github.com/Andy-Cheng/blockchain#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/preset-env": "^7.1.6"
+  },
+  "dependencies": {
+    "@babel/polyfill": "^7.0.0",
+    "axion": "^0.1.0",
+    "babel-preset-env": "^1.7.0",
+    "express": "^4.16.4",
+    "mongoose": "^5.3.12",
+    "multer": "^1.4.1"
+  }
+}
