@@ -5,8 +5,8 @@ const blockChainRouter = require('express').Router();
 const multer  = require('multer')();
 const { blockModel } = require('./mongoose-db');
 const apiMsg = require('./apiMsg');
-const { blockReadOptions, blockChainReadOptions, mineBlockOptions, transactionAddOptions, getBalanceOptions } = require('./multerOption');
-const { BlockChain, getBalanceOfAddr } = require('./utils');
+const { blockReadOptions, blockChainReadOptions, mineBlockOptions, transactionAddOptions, getBalanceOptions, getPendingOptions, getPendingFromAddr, getPendingToAddr } = require('./multerOption');
+const { BlockChain, getBalanceOfAddr, Transaction } = require('./utils');
 
 // Initialize a blockchain.
 const blockChain = new BlockChain();
@@ -76,8 +76,12 @@ blockChainRouter.post('/add/transaction', multer.fields(transactionAddOptions), 
             console.log(`Find blocks error: ${err}`);
             res.status(200).json(apiMsg.blockReadUnSuccessfully);
         }
-        let trasactionMsg = blockChain.createTransaction(ChainId, FromAddr, ToAddr, parseInt(amount), blocks);
+        const newTx = new Transaction(ChainId, FromAddr, ToAddr, parseInt(amount));
+        let trasactionMsg = blockChain.addTransaction(newTx, blocks);
         if(trasactionMsg == "Balance_of_the_sender_is_not_enough"){
+            res.status(200).json(apiMsg.transactionAddedUnSuccessfully);
+        }
+        else if(trasactionMsg == "transaction_invalid"){
             res.status(200).json(apiMsg.transactionAddedUnSuccessfully);
         }
         else{
@@ -108,6 +112,30 @@ blockChainRouter.get('/read/balance', multer.fields(getBalanceOptions), async (r
     await blockModel.find({ChainId: ChainId})
     .exec(cb1);
 });
+
+// Read pending transactions
+
+blockChainRouter.get('/read/pending', multer.fields(getPendingOptions),  (req, res, next)=>{
+    console.log('api: read pending transactions');
+    const { ChainId } = req.body
+    let pendings = blockChain.pendingTransactions.filter( (transaction)=> (transaction.ChainId == ChainId));
+    res.status(200).json({pendingTransactions: pendings});
+});
+
+blockChainRouter.get('/read/pending_from', multer.fields(getPendingFromAddr),  (req, res, next)=>{
+    console.log('api: read pending transactions from addr');
+    const { ChainId, FromAddr } = req.body
+    let pendings = blockChain.pendingTransactions.filter( (transaction)=> ( (transaction.ChainId == ChainId) && (transaction.FromAddr == FromAddr) ) );
+    res.status(200).json({pendingTransactions: pendings});
+});
+
+blockChainRouter.get('/read/pending_to', multer.fields(getPendingToAddr),  (req, res, next)=>{
+    console.log('api: read pending transactions to addr');
+    const { ChainId, ToAddr } = req.body
+    let pendings = blockChain.pendingTransactions.filter( (transaction)=> ( (transaction.ChainId == ChainId) && (transaction.ToAddr == ToAddr) ) );
+    res.status(200).json({pendingTransactions: pendings});
+});
+
 
 // Read a block
 blockChainRouter.get('/read/block', multer.fields(blockReadOptions), async (req, res, next)=>{
